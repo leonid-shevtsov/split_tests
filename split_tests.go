@@ -12,6 +12,7 @@ import (
 
 var useCircleCI bool
 var useJUnitXML bool
+var useLineCount bool
 var junitXMLPath string
 var testFilePattern = ""
 var circleCIProjectPrefix = ""
@@ -56,7 +57,9 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 		if _, isSet := fileTimes[file]; isSet {
 			continue
 		}
-		printMsg("missing file time for %s\n", file)
+		if useCircleCI || useJUnitXML {
+			printMsg("missing file time for %s\n", file)
+		}
 		fileTimes[file] = averageFileTime
 	}
 }
@@ -94,11 +97,13 @@ func parseFlags() {
 	flag.IntVar(&splitTotal, "split-total", -1, "Total number of containers (or set CIRCLE_NODE_TOTAL)")
 
 	flag.StringVar(&circleCIAPIKey, "circleci-key", "", "CircleCI API key (or set CIRCLECI_API_KEY environment variable) - required to use CircleCI")
-	flag.StringVar(&circleCIProjectPrefix, "circleci-project", "", "CircleCI project name (e.g. github/leonid-shevtsov/circleci-test-balancer) - required to use CircleCI")
+	flag.StringVar(&circleCIProjectPrefix, "circleci-project", "", "CircleCI project name (e.g. github/leonid-shevtsov/split_tests) - required to use CircleCI")
 	flag.StringVar(&circleCIBranchName, "circleci-branch", "", "Current branch for CircleCI (or set CIRCLE_BRANCH) - required to use CircleCI")
 
 	flag.BoolVar(&useJUnitXML, "junit", false, "Use a JUnit XML report for test times")
 	flag.StringVar(&junitXMLPath, "junit-path", "", "Path to a JUnit XML report (leave empty to read from stdin)")
+
+	flag.BoolVar(&useLineCount, "line-count", false, "Use line count to estimate test times")
 
 	var showHelp bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help text")
@@ -126,7 +131,6 @@ func parseFlags() {
 	}
 
 	useCircleCI = circleCIAPIKey != ""
-	showHelp = showHelp || !useCircleCI && !useJUnitXML
 
 	if showHelp {
 		printMsg("Splits test files into containers of even duration\n\n")
@@ -144,25 +148,28 @@ func parseFlags() {
 func main() {
 	parseFlags()
 
+	currentFiles, _ := zglob.Glob(testFilePattern)
+	currentFileSet := make(map[string]bool)
+	for _, file := range currentFiles {
+		currentFileSet[file] = true
+	}
+
 	fileTimes := make(map[string]float64)
-	if useJUnitXML {
+	if useLineCount {
+		estimateFileTimesByLineCount(currentFileSet, fileTimes)
+	} else if useJUnitXML {
 		getFileTimesFromJUnitXML(fileTimes)
 	} else if useCircleCI {
 		getFileTimesFromCircleCI(fileTimes)
-	}
-
-	currentFiles, _ := zglob.Glob(testFilePattern)
-	currentFileSet := make(map[string]bool)
-
-	for _, file := range currentFiles {
-		currentFileSet[file] = true
 	}
 
 	removeDeletedFiles(fileTimes, currentFileSet)
 	addNewFiles(fileTimes, currentFileSet)
 
 	buckets, bucketTimes := splitFiles(fileTimes, splitTotal)
-	printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
+	if useCircleCI || useJUnitXML {
+		printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
+	}
 
 	fmt.Println(strings.Join(buckets[splitIndex], " "))
 }
