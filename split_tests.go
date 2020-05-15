@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	zglob "github.com/mattn/go-zglob"
+	"github.com/bmatcuk/doublestar"
 )
 
 var useCircleCI bool
@@ -148,7 +148,13 @@ func parseFlags() {
 func main() {
 	parseFlags()
 
-	currentFiles, _ := zglob.Glob(testFilePattern)
+	// We are not using filepath.Glob,
+	// because it doesn't support '**' (to match all files in all nested directories)
+	currentFiles, err := doublestar.Glob(testFilePattern)
+	if err != nil {
+		printMsg("failed to enumerate current file set: %v", err)
+		os.Exit(1)
+	}
 	currentFileSet := make(map[string]bool)
 	for _, file := range currentFiles {
 		currentFileSet[file] = true

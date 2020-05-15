@@ -1,2 +1,2 @@
-github.com/mattn/go-zglob v0.0.0-20170124115757-95345c4e1c0e h1:MjZj0KCx7aFNToMEqvMJB0IE+PpRi/goV1RC4NPfy4A=
-github.com/mattn/go-zglob v0.0.0-20170124115757-95345c4e1c0e/go.mod h1:9fxibJccNxU2cnpIKLRRFA7zX7qhkJIQWBb449FYHOo=
+github.com/bmatcuk/doublestar v1.3.0 h1:1jLE2y0VpSrOn/QR9G4f2RmrCtkM3AuATcWradjHUvM=
+github.com/bmatcuk/doublestar v1.3.0/go.mod h1:wiQtGV+rzVYxB7WIlirSN++5HPtPlXEo9MEoZQC/PmE=
