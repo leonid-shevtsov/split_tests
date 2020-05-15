@@ -1,3 +1,0 @@
-package: github.com/leonid-shevtsov/circleci-test-balancer
-import:
-- package: github.com/mattn/go-zglob
