@@ -16,10 +16,10 @@ var useLineCount bool
 var junitXMLPath string
 var testFilePattern = ""
 var circleCIProjectPrefix = ""
-var circleCIBranchName = os.Getenv("CIRCLE_BRANCH")
-var splitIndex, _ = strconv.Atoi(os.Getenv("CIRCLE_NODE_INDEX"))
-var splitTotal, _ = strconv.Atoi(os.Getenv("CIRCLE_NODE_TOTAL"))
-var circleCIAPIKey = os.Getenv("CIRCLECI_API_KEY")
+var circleCIBranchName string
+var splitIndex int
+var splitTotal int
+var circleCIAPIKey string
 
 func printMsg(msg string, args ...interface{}) {
 	if len(args) == 0 {
