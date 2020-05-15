@@ -10,13 +10,13 @@ func estimateFileTimesByLineCount(currentFileSet map[string]bool, fileTimes map[
 	for fileName := range currentFileSet {
 		file, err := os.Open(fileName)
 		if err != nil {
-			printMsg("failed to count lines in file %s: %v\n", file, err)
+			printMsg("failed to count lines in file %s: %v\n", fileName, err)
 			continue
 		}
 		defer file.Close()
 		lineCount, err := lineCounter(file)
 		if err != nil {
-			printMsg("failed to count lines in file %s: %v\n", file, err)
+			printMsg("failed to count lines in file %s: %v\n", fileName, err)
 			continue
 		}
 		fileTimes[fileName] = float64(lineCount)
