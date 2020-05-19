@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path"
+
+	"github.com/bmatcuk/doublestar"
 )
 
 type junitXML struct {
@@ -26,23 +28,31 @@ func loadJUnitXML(reader io.Reader) *junitXML {
 	return &junitXML
 }
 
-func getFileTimesFromJUnitXML(fileTimes map[string]float64) {
-	var source io.Reader
-	if junitXMLPath != "" {
-		file, err := os.Open(junitXMLPath)
-		if err != nil {
-			fatalMsg("failed to open junit xml: %v\n", err)
-		}
-		defer file.Close()
-		printMsg("using test times from JUnit report %s\n", junitXMLPath)
-		source = file
-	} else {
-		printMsg("using test times from JUnit report at stdin\n")
-		source = os.Stdin
-	}
-	junitXML := loadJUnitXML(source)
+func addFileTimesFromIOReader(fileTimes map[string]float64, reader io.Reader) {
+	junitXML := loadJUnitXML(reader)
 	for _, testCase := range junitXML.TestCases {
 		filePath := path.Clean(testCase.File)
 		fileTimes[filePath] += testCase.Time
+	}
+}
+
+func getFileTimesFromJUnitXML(fileTimes map[string]float64) {
+	if junitXMLPath != "" {
+		filenames, err := doublestar.Glob(junitXMLPath)
+		if err != nil {
+			fatalMsg("failed to match jUnit filename pattern: %v", err)
+		}
+		for _, junitFilename := range filenames {
+			file, err := os.Open(junitFilename)
+			if err != nil {
+				fatalMsg("failed to open junit xml: %v\n", err)
+			}
+			printMsg("using test times from JUnit report %s\n", junitXMLPath)
+			addFileTimesFromIOReader(fileTimes, file)
+			file.Close()
+		}
+	} else {
+		printMsg("using test times from JUnit report at stdin\n")
+		addFileTimesFromIOReader(fileTimes, os.Stdin)
 	}
 }
