@@ -64,32 +64,6 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 	}
 }
 
-func splitFiles(fileTimes map[string]float64, splitTotal int) ([][]string, []float64) {
-	buckets := make([][]string, splitTotal)
-	bucketTimes := make([]float64, splitTotal)
-	for len(fileTimes) > 0 {
-		// find file with max weight
-		maxFile := ""
-		for file, time := range fileTimes {
-			if len(maxFile) == 0 || time > fileTimes[maxFile] {
-				maxFile = file
-			}
-		}
-		// find bucket with min weight
-		minBucket := 0
-		for bucket := 1; bucket < splitTotal; bucket++ {
-			if bucketTimes[bucket] < bucketTimes[minBucket] {
-				minBucket = bucket
-			}
-		}
-		buckets[minBucket] = append(buckets[minBucket], maxFile)
-		bucketTimes[minBucket] += fileTimes[maxFile]
-		delete(fileTimes, maxFile)
-	}
-
-	return buckets, bucketTimes
-}
-
 func parseFlags() {
 	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Glob pattern to find test files")
 
