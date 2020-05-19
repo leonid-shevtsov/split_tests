@@ -7,6 +7,8 @@ This is necessary for running the tests in parallel. As the execution time of te
 ## Compatibility
 
 This tool was written for Ruby and CircleCI, but it can be used with any file-based test suite on any CI.
+Since then, CircleCI has introduced built-in test splitting. Also since then, the tool has been applied on
+GitHub Actions, that do not provide test splitting.
 
 It is written in Golang, released as a binary, and has no external dependencies.
 
@@ -54,7 +56,7 @@ rspec $(split_tests)
 
 ## Arguments
 
-``` plain
+```plain
 $./split_tests -help
 
   -circleci-branch string
@@ -70,7 +72,7 @@ $./split_tests -help
   -junit
         Use a JUnit XML report for test times
   -junit-path string
-        Path to a JUnit XML report (leave empty to read from stdin)
+        Path to a JUnit XML report (leave empty to read from stdin; use glob pattern to load multiple files)
   -line-count
         Use line count to estimate test times
   -split-index int
@@ -81,14 +83,12 @@ $./split_tests -help
 
 ## Compilation
 
-This tool is written in Go.
+This tool is written in Go and uses Go modules.
 
-* Install Go.
-* Install the [Glide](https://glide.sh) dependency manager.
-* Checkout the code
-* `glide install`
-* `make`
+- Install Go
+- Checkout the code
+- `make`
 
-* * *  
+---
 
-(c) [Leonid Shevtsov](https://leonid.shevtsov.me) 2017
+(c) [Leonid Shevtsov](https://leonid.shevtsov.me) 2017-2020
