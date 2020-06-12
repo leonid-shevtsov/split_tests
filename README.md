@@ -67,6 +67,8 @@ $./split_tests -help
         CircleCI project name (e.g. github/leonid-shevtsov/split_tests) - required to use CircleCI
   -glob string
         Glob pattern to find test files (default "spec/**/*_spec.rb")
+  -exclude-glob string
+        Glob pattern to exclude test files
   -help
         Show this help text
   -junit

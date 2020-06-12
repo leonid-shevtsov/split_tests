@@ -15,6 +15,7 @@ var useJUnitXML bool
 var useLineCount bool
 var junitXMLPath string
 var testFilePattern = ""
+var excludeFilePattern = ""
 var circleCIProjectPrefix = ""
 var circleCIBranchName string
 var splitIndex int
@@ -66,6 +67,7 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 
 func parseFlags() {
 	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Glob pattern to find test files")
+	flag.StringVar(&excludeFilePattern, "exclude-glob", "", "Glob pattern to exclude test files")
 
 	flag.IntVar(&splitIndex, "split-index", -1, "This test container's index (or set CIRCLE_NODE_INDEX)")
 	flag.IntVar(&splitTotal, "split-total", -1, "Total number of containers (or set CIRCLE_NODE_TOTAL)")
@@ -132,6 +134,17 @@ func main() {
 	currentFileSet := make(map[string]bool)
 	for _, file := range currentFiles {
 		currentFileSet[file] = true
+	}
+
+	if excludeFilePattern != "" {
+		excludedFiles, err := doublestar.Glob(excludeFilePattern)
+		if err != nil {
+			printMsg("failed to enumerate excluded file set: %v", err)
+			os.Exit(1)
+		}
+		for _, file := range excludedFiles {
+			delete(currentFileSet, file)
+		}
 	}
 
 	fileTimes := make(map[string]float64)
