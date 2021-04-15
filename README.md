@@ -91,6 +91,45 @@ This tool is written in Go and uses Go modules.
 - Checkout the code
 - `make`
 
+## Examples
+
+### GitHub Actions
+
+```yaml
+name: test-pr
+on:
+  pull_request:
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: [0, 1]
+    steps:
+      - uses: actions/checkout@v2
+      # ... other setup
+      - name: split_tests
+        id: split_tests
+        env:
+          MATRIX_INDEX: ${{ matrix.container }}
+          MATRIX_LENGTH: 2
+          SPLIT_TEST_VERSION: 'v0.3.0'
+          GLOB: './**/*.spec.*'
+        run: |
+          curl -sL "https://github.com/leonid-shevtsov/split_tests/releases/download/${SPLIT_TEST_VERSION}/split_tests.linux.gz" | gzip -d > split_tests
+          chmod +x ./split_tests
+
+          TESTS=$(./split_tests --glob "${GLOB}" --split-index=${MATRIX_INDEX} --split-total=${MATRIX_LENGTH} --line-count)
+          TESTS_COMMA_SEP=$(echo ${TESTS} | sed 's/  */,/g')
+
+          echo "::set-output name=TESTS::${TESTS}"
+          echo "::set-output name=TESTS_COMMA_SEP::${TESTS_COMMA_SEP}"
+      - name: run tests
+        run: |
+          echo "${{ steps.split_tests.outputs.TESTS }}"
+          echo "${{ steps.split_tests.outputs.TESTS_COMMA_SEP }}"
+```
 ---
 
 (c) [Leonid Shevtsov](https://leonid.shevtsov.me) 2017-2020
