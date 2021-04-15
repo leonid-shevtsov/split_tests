@@ -106,14 +106,15 @@ jobs:
     strategy:
       matrix:
         container: [0, 1]
+    env:
+      MATRIX_INDEX: ${{ matrix.container }}
+      MATRIX_LENGTH: 2
     steps:
       - uses: actions/checkout@v2
       # ... other setup
       - name: split_tests
         id: split_tests
         env:
-          MATRIX_INDEX: ${{ matrix.container }}
-          MATRIX_LENGTH: 2
           SPLIT_TEST_VERSION: 'v0.3.0'
           GLOB: './**/*.spec.*'
         run: |
