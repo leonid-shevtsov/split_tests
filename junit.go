@@ -47,7 +47,7 @@ func getFileTimesFromJUnitXML(fileTimes map[string]float64) {
 			if err != nil {
 				fatalMsg("failed to open junit xml: %v\n", err)
 			}
-			printMsg("using test times from JUnit report %s\n", junitXMLPath)
+			printMsg("using test times from JUnit report %s\n", junitFilename)
 			addFileTimesFromIOReader(fileTimes, file)
 			file.Close()
 		}
