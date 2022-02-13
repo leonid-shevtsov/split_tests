@@ -8,7 +8,9 @@ This is necessary for running the tests in parallel. As the execution time of te
 
 This tool was written for Ruby and CircleCI, but it can be used with any file-based test suite on any CI.
 Since then, CircleCI has introduced built-in test splitting. Also since then, the tool has been applied on
-GitHub Actions, that do not provide test splitting.
+GitHub Actions, that does not provide native test splitting.
+
+There is a [split-tests GitHub Action](https://github.com/marketplace/actions/split-tests) using this tool available on the Actions Marketplace.
 
 It is written in Golang, released as a binary, and has no external dependencies.
 
