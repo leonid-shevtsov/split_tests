@@ -67,10 +67,10 @@ $./split_tests -help
         CircleCI API key (or set CIRCLECI_API_KEY environment variable) - required to use CircleCI
   -circleci-project string
         CircleCI project name (e.g. github/leonid-shevtsov/split_tests) - required to use CircleCI
-  -glob string
-        Glob pattern to find test files (default "spec/**/*_spec.rb")
-  -exclude-glob string
-        Glob pattern to exclude test files
+  -glob 'pattern'
+        Glob pattern to find test files (default 'spec/**/*_spec.rb'). Make sure to single-quote the pattern to avoid shell expansion.
+  -exclude-glob 'pattern'
+        Glob pattern to exclude test files. Make sure to single-quote as well.
   -help
         Show this help text
   -junit

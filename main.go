@@ -66,8 +66,8 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 }
 
 func parseFlags() {
-	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Glob pattern to find test files")
-	flag.StringVar(&excludeFilePattern, "exclude-glob", "", "Glob pattern to exclude test files")
+	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Glob pattern to find test files. Make sure to single-quote to avoid shell expansion.")
+	flag.StringVar(&excludeFilePattern, "exclude-glob", "", "Glob pattern to exclude test files. Make sure to single-quote.")
 
 	flag.IntVar(&splitIndex, "split-index", -1, "This test container's index (or set CIRCLE_NODE_INDEX)")
 	flag.IntVar(&splitTotal, "split-total", -1, "Total number of containers (or set CIRCLE_NODE_TOTAL)")
