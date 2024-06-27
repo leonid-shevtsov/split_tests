@@ -1,7 +1,5 @@
 name: Release
 
-name: Create Release Note
-
 on:
   pull_request:
     types:
