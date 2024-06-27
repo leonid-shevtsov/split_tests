@@ -14,7 +14,7 @@ var useCircleCI bool
 var useJUnitXML bool
 var useLineCount bool
 var junitXMLPath string
-var testFilePattern = ""
+var testFilePatterns []string
 var excludeFilePattern = ""
 var circleCIProjectPrefix = ""
 var circleCIBranchName string
@@ -66,7 +66,8 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 }
 
 func parseFlags() {
-	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Glob pattern to find test files. Make sure to single-quote to avoid shell expansion.")
+	var testFilePattern string
+	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Comma-separated glob patterns to find test files. Make sure to single-quote to avoid shell expansion.")
 	flag.StringVar(&excludeFilePattern, "exclude-glob", "", "Glob pattern to exclude test files. Make sure to single-quote.")
 
 	flag.IntVar(&splitIndex, "split-index", -1, "This test container's index (or set CIRCLE_NODE_INDEX)")
@@ -85,6 +86,8 @@ func parseFlags() {
 	flag.BoolVar(&showHelp, "help", false, "Show this help text")
 
 	flag.Parse()
+
+	testFilePatterns = strings.Split(testFilePattern, ",")
 
 	var err error
 	if circleCIAPIKey == "" {
@@ -126,14 +129,16 @@ func main() {
 
 	// We are not using filepath.Glob,
 	// because it doesn't support '**' (to match all files in all nested directories)
-	currentFiles, err := doublestar.Glob(testFilePattern)
-	if err != nil {
-		printMsg("failed to enumerate current file set: %v", err)
-		os.Exit(1)
-	}
 	currentFileSet := make(map[string]bool)
-	for _, file := range currentFiles {
-		currentFileSet[file] = true
+	for _, pattern := range testFilePatterns {
+		currentFiles, err := doublestar.Glob(pattern)
+		if err != nil {
+			printMsg("failed to enumerate current file set for pattern %s: %v", pattern, err)
+			os.Exit(1)
+		}
+		for _, file := range currentFiles {
+			currentFileSet[file] = true
+		}
 	}
 
 	if excludeFilePattern != "" {
