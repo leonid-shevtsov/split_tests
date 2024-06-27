@@ -53,6 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create Release Tag And Note
+        id: create-release
         env:
           # このトークンは自動生成されるのでsecretsを登録する必要ない
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,6 +65,12 @@ jobs:
           name: Release ${{ env.RELEASE_TAG }}
           version: ${{ env.RELEASE_TAG }}
           publish: true
+      - run: |
+        echo '${{ steps.create-release.outputs.upload_url }}' > release_upload_url.txt
+      - uses: actions/upload-artifact@v1
+        with:
+          name: create-release
+          path: release_upload_url.txt
 
   upload-release:
     needs: [create-release]
@@ -80,6 +87,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: create-release
+      - id: upload-url
+        run: |
+          echo "::set-output name=url::$(cat create-release/release_upload_url.txt)"
       - name: Download Artifact
         uses: actions/download-artifact@v3
         with:
