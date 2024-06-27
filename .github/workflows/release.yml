@@ -1,4 +1,4 @@
-name: Release CLI to the GitHub Release
+name: Release
 
 on:
   push:
@@ -6,24 +6,97 @@ on:
       - "v*"
 
 jobs:
-  release:
-    name: Release
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+            ext: ""
+          - os: ubuntu-latest
+            arch: arm64
+            ext: ""
+          - os: macos-latest
+            arch: amd64
+            ext: ""
+          - os: windows-latest
+            arch: amd64
+            ext: ".exe"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.20' # 必要なGoのバージョンを指定
+
+      - name: Build
+        run: |
+          GOOS=$(echo ${{ matrix.os }} | cut -d'-' -f1)
+          GOARCH=${{ matrix.arch }}
+          EXT=${{ matrix.ext }}
+          OUTPUT=build/myapp-${{ matrix.os }}-${{ matrix.arch }}${EXT}
+          mkdir -p $(dirname $OUTPUT)
+          go build -o $OUTPUT
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ matrix.os }}-${{ matrix.arch }}
+          path: build/myapp-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+
+  create-release:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-      - name: Bump-up Semantic Version
-        uses: kyoh86/git-vertag-action@v1.1
-        with:
-          # method: "major", "minor" or "patch" to update tag with semver
-          method: "${{ github.event.inputs.method }}"
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.14
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: release --rm-dist
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  upload-release:
+    needs: [create-release]
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+            ext: ""
+          - os: ubuntu-latest
+            arch: arm64
+            ext: ""
+          - os: macos-latest
+            arch: amd64
+            ext: ""
+          - os: windows-latest
+            arch: amd64
+            ext: ".exe"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-${{ matrix.os }}-${{ matrix.arch }}
+          path: build/
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/myapp-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+          asset_name: myapp-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+          asset_content_type: application/octet-stream
