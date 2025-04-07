@@ -59,7 +59,7 @@ split_tests -bias 0=20 -junit ...
 
 The effect is that the split algorithm will assume an external delay of 20 seconds for the 0th split, and will reduce its assigned load by 20 seconds (as best it can.) Bias can be negative, too.
 
-Don't forget to specify the same bias on all runners, not just the ones that have bias.
+Don't forget to specify the same bias configuration on all runners, not just the ones that have bias.
 
 This works best when you have real test timings (JUnit or CircleCI mode.) For splits by line count, you can still find the right bias empirically - although splits by line count are never perfectly balanced anyway.
 
