@@ -21,6 +21,7 @@ var circleCIBranchName string
 var splitIndex int
 var splitTotal int
 var circleCIAPIKey string
+var bias string
 
 func printMsg(msg string, args ...interface{}) {
 	if len(args) == 0 {
@@ -84,6 +85,8 @@ func parseFlags() {
 	var showHelp bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help text")
 
+	flag.StringVar(&bias, "bias", "", "Set bias for specific splits (if one split is doing extra work like running a linter).\nFormat: [split_index]=[bias_in_seconds],[another_index]=[another_bias],...")
+
 	flag.Parse()
 
 	var err error
@@ -128,8 +131,7 @@ func main() {
 	// because it doesn't support '**' (to match all files in all nested directories)
 	currentFiles, err := doublestar.Glob(testFilePattern)
 	if err != nil {
-		printMsg("failed to enumerate current file set: %v", err)
-		os.Exit(1)
+		fatalMsg("failed to enumerate current file set: %v", err)
 	}
 	currentFileSet := make(map[string]bool)
 	for _, file := range currentFiles {
@@ -139,8 +141,7 @@ func main() {
 	if excludeFilePattern != "" {
 		excludedFiles, err := doublestar.Glob(excludeFilePattern)
 		if err != nil {
-			printMsg("failed to enumerate excluded file set: %v", err)
-			os.Exit(1)
+			fatalMsg("failed to enumerate excluded file set: %v", err)
 		}
 		for _, file := range excludedFiles {
 			delete(currentFileSet, file)
@@ -159,10 +160,44 @@ func main() {
 	removeDeletedFiles(fileTimes, currentFileSet)
 	addNewFiles(fileTimes, currentFileSet)
 
-	buckets, bucketTimes := splitFiles(fileTimes, splitTotal)
+	var biases []float64
+	if bias != "" {
+		biases, err = parseBias(bias, splitTotal)
+		if err != nil {
+			fatalMsg("failed to parse bias: %v", err)
+		}
+	} else {
+		biases = make([]float64, splitTotal)
+	}
+
+	buckets, bucketTimes := splitFiles(biases, fileTimes, splitTotal)
 	if useCircleCI || useJUnitXML {
 		printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
 	}
 
 	fmt.Println(strings.Join(buckets[splitIndex], " "))
+}
+
+func parseBias(bias string, splitTotal int) ([]float64, error) {
+	declarations := strings.Split(bias, ",")
+	biases := make([]float64, splitTotal)
+	for _, declaration := range declarations {
+		parts := strings.Split(declaration, "=")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("not a valid bias declaration: %s", declaration)
+		}
+		index, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bias index: %w", err)
+		}
+		if index < 0 || index >= splitTotal {
+			return nil, fmt.Errorf("bias index is not within the split number: %d", index)
+		}
+		biasSeconds, err := strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bias time: %w", err)
+		}
+		biases[index] = biasSeconds
+	}
+	return biases, nil
 }

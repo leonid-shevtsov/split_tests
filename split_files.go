@@ -2,7 +2,7 @@ package main
 
 import "sort"
 
-func splitFiles(fileTimesMap map[string]float64, splitTotal int) ([][]string, []float64) {
+func splitFiles(biases []float64, fileTimesMap map[string]float64, splitTotal int) ([][]string, []float64) {
 	buckets := make([][]string, splitTotal)
 	bucketTimes := make([]float64, splitTotal)
 
@@ -17,7 +17,7 @@ func splitFiles(fileTimesMap map[string]float64, splitTotal int) ([][]string, []
 		// find bucket with min weight
 		minBucket := 0
 		for bucket := 1; bucket < splitTotal; bucket++ {
-			if bucketTimes[bucket] < bucketTimes[minBucket] {
+			if bucketTimes[bucket]+biases[bucket] < bucketTimes[minBucket]+biases[minBucket] {
 				minBucket = bucket
 			}
 		}

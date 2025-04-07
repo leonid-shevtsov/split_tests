@@ -48,6 +48,21 @@ If you don't have test times, it might be reasonable for your project to assume 
 rspec $(split_tests -line-count)
 ```
 
+### Apply bias
+
+Often a specific split will not just run the test suite, but also a linter or some other quicker checks. In this case you can use the `bias` argument to balance the split better:
+
+```
+# account for 20-second linter run in split 0
+split_tests -bias 0=20 -junit ...
+```
+
+The effect is that the split algorithm will assume an external delay of 20 seconds for the 0th split, and will reduce its assigned load by 20 seconds (as best it can.) Bias can be negative, too.
+
+Don't forget to specify the same bias on all runners, not just the ones that have bias.
+
+This works best when you have real test timings (JUnit or CircleCI mode.) For splits by line count, you can still find the right bias empirically - although splits by line count are never perfectly balanced anyway.
+
 ### Naive split by file count
 
 In the absence of prior test times, `split_tests` can still split files into even groups by count.
@@ -58,19 +73,22 @@ rspec $(split_tests)
 
 ## Arguments
 
-```plain
+````plain
 $./split_tests -help
 
+  -bias string
+        Set bias for specific splits (if one split is doing extra work like running a linter).
+        Format: [split_index]=[bias_in_seconds],[another_index]=[another_bias],...
   -circleci-branch string
         Current branch for CircleCI (or set CIRCLE_BRANCH) - required to use CircleCI
   -circleci-key string
         CircleCI API key (or set CIRCLECI_API_KEY environment variable) - required to use CircleCI
   -circleci-project string
         CircleCI project name (e.g. github/leonid-shevtsov/split_tests) - required to use CircleCI
-  -glob 'pattern'
-        Glob pattern to find test files (default 'spec/**/*_spec.rb'). Make sure to single-quote the pattern to avoid shell expansion.
-  -exclude-glob 'pattern'
-        Glob pattern to exclude test files. Make sure to single-quote as well.
+  -exclude-glob string
+        Glob pattern to exclude test files. Make sure to single-quote.
+  -glob string
+        Glob pattern to find test files. Make sure to single-quote to avoid shell expansion. (default "spec/**/*_spec.rb")
   -help
         Show this help text
   -junit
@@ -96,3 +114,4 @@ This tool is written in Go and uses Go modules.
 ---
 
 (c) [Leonid Shevtsov](https://leonid.shevtsov.me) 2017-2020
+````
