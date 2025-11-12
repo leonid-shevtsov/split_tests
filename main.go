@@ -82,6 +82,10 @@ func parseFlags() {
 
 	flag.BoolVar(&useLineCount, "line-count", false, "Use line count to estimate test times")
 
+	flag.StringVar(&junitUpdateOldGlob, "junit-update", "", "Glob pattern for old JUnit XML files (for updating timings with sliding window)")
+	flag.StringVar(&junitUpdateNewGlob, "junit-new", "", "Glob pattern for new JUnit XML files (for updating timings with sliding window)")
+	flag.StringVar(&junitUpdateOutPath, "junit-out", "", "Output path for updated JUnit XML file (for updating timings with sliding window)")
+
 	var showHelp bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help text")
 
@@ -116,16 +120,25 @@ func parseFlags() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+
 	if useCircleCI && (circleCIProjectPrefix == "" || circleCIBranchName == "") {
 		fatalMsg("Incomplete CircleCI configuration (set -circleci-key, -circleci-project, and -circleci-branch\n")
-	}
-	if splitTotal == 0 || splitIndex < 0 || splitIndex > splitTotal {
-		fatalMsg("-split-index and -split-total (and environment variables) are missing or invalid\n")
 	}
 }
 
 func main() {
 	parseFlags()
+
+	// If JUnit update mode is enabled, handle it separately and exit
+	if junitUpdateOldGlob != "" || junitUpdateNewGlob != "" || junitUpdateOutPath != "" {
+		updateJUnitTimings()
+		return
+	}
+
+	// Validate split parameters (not needed in update mode)
+	if splitTotal == 0 || splitIndex < 0 || splitIndex > splitTotal {
+		fatalMsg("-split-index and -split-total (and environment variables) are missing or invalid\n")
+	}
 
 	// We are not using filepath.Glob,
 	// because it doesn't support '**' (to match all files in all nested directories)

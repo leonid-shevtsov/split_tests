@@ -40,6 +40,18 @@ Or, if it's easier to pipe the report file:
 rspec $(curl http://my.junit.url | split_tests -junit -split-index=$CI_NODE_INDEX -split-total=$CI_NODE_TOTAL)
 ```
 
+#### Stabilizing test timings
+
+Sometimes test timings fluctuate, so always relying on the latest timings might not make the best split. For such cases, `split_tests` has an update mode that will apply a sliding window average between prior timings and current ones:
+
+```
+split_tests -junit-update=old_glob -junit-new=new_glob -junit-out=out.xml
+```
+
+Then you take out.xml and use it for the next test run.
+
+Note that updating also cleans up the files and only preserves one "test case" per file, because that is enough for this tool's purpose.
+
 ### Naive split by line count
 
 If you don't have test times, it might be reasonable for your project to assume runtime proportional to test length.
@@ -95,6 +107,12 @@ $./split_tests -help
         Use a JUnit XML report for test times
   -junit-path string
         Path to a JUnit XML report (leave empty to read from stdin; use glob pattern to load multiple files)
+  -junit-new string
+        Glob pattern for new JUnit XML files (for updating timings with sliding window)
+  -junit-out string
+        Output path for updated JUnit XML file (for updating timings with sliding window)
+  -junit-update string
+        Glob pattern for old JUnit XML files (for updating timings with sliding window)
   -line-count
         Use line count to estimate test times
   -split-index int
